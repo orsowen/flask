@@ -154,8 +154,8 @@
                         <th>Paramètre</th>
                         <th>Valeur</th>
                         <th>Unité</th>
-                        <th>Interprétation</th>
-                        <th>Statut</th>
+                        <th>Valeurs Usuelles</th>
+                        <th>Interprétation</th>         
                     </tr>
                 </thead>
                 <tbody id="resultsBody"></tbody>
@@ -197,7 +197,9 @@
                 }
                 
                 const data = await response.json();
-                console.log(data);
+             
+
+
                 
                 // Vérification des données
                 if (!data.parameters) {
@@ -239,12 +241,12 @@
     data.parameters.forEach(item => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${item.champ || 'Inconnu'}</td>
-            <td class="value">${item.valeur !== undefined ? item.valeur : 'N/A'}</td>
-            <td>${item.unité || ''}</td>
-            <td>${item.interprétation || 'Non analysé'}</td>
-            <td class="${item.état || 'unknown'}">${getStatusLabel(item.état)}</td>
-        `;
+    <td>${item.champ || 'Inconnu'}</td>
+    <td class="value">${item.valeur !== undefined ? item.valeur : 'N/A'}</td>
+    <td>${item.unité || ''}</td>
+    <td>${item.référence || 'N/A'}</td> <!-- ✅ Ajout de la référence -->
+    <td class="${item.état || 'unknown'}">${getStatusLabel(item.état)}</td>
+`;
         tbody.appendChild(row);
     });
 

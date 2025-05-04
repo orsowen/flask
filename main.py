@@ -19,14 +19,16 @@ def analyze():
 
     try:
         # Ouvrir l'image à partir du flux de la requête
-        image = Image.open(file.stream)
+        image_bytes = file.read()
+        image = Image.open(io.BytesIO(image_bytes))
 
         # Correction et prétraitement de l'image
-        image = utils.correct_image_orientation(image)  # Fonction à définir dans utils.py
-        image = utils.preprocess_medical_image(image)  # Fonction à définir dans utils.py
+        corrected_image = utils.auto_correct_orientation(image)
+        # processed_image = utils.preprocess_medical_image(corrected_image)
+        # processed_image.show()
 
         # Lancer l’analyse OCR
-        analyser = OcrService(image)
+        analyser = OcrService(corrected_image)
         result = analyser.analyse()
         print(result) 
 
