@@ -8,6 +8,7 @@ app = Flask(__name__)
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze():
+    print("hi")
     # Vérification si un fichier est présent dans la requête
     if 'file' not in request.files:
         return jsonify({'error': 'Aucun fichier reçu'}), 400
@@ -34,8 +35,11 @@ def analyze():
 
         # Retourner la réponse JSON avec le temps de traitement et les résultats des paramètres
         return jsonify({
+            'Edite_date':result['edite_le_date'],
             'processing_time': result['temps'],
-            'parameters': result['résultats']
+            'tables': result['tables'],
+            'patient_info': result.get('person_info', {}),
+            'status': 'success'
         })
 
     except Exception as e:

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Analyse Médicale</title>
     <style>
         body {
@@ -12,7 +12,6 @@
             padding: 20px;
             background-color: #f5f5f5;
         }
-        
         .container {
             max-width: 1000px;
             margin: 0 auto;
@@ -21,13 +20,10 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        
-        h1 {
+        h1, h2, h3 {
             color: #2c3e50;
             text-align: center;
-            margin-bottom: 30px;
         }
-        
         #uploadForm {
             display: flex;
             flex-direction: column;
@@ -37,13 +33,11 @@
             background: #f8f9fa;
             border-radius: 5px;
         }
-        
         #uploadForm input[type="file"] {
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-        
         #uploadForm button {
             padding: 10px 15px;
             background-color: #3498db;
@@ -54,11 +48,9 @@
             font-size: 16px;
             transition: background-color 0.3s;
         }
-        
         #uploadForm button:hover {
             background-color: #2980b9;
         }
-        
         .spinner {
             display: none;
             width: 40px;
@@ -69,12 +61,10 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
         #statusMessage {
             display: none;
             padding: 10px;
@@ -82,134 +72,96 @@
             border-radius: 4px;
             text-align: center;
         }
-        
         #statusMessage.success {
             background-color: #d4edda;
             color: #155724;
+            display: block;
         }
-        
         #statusMessage.error {
             background-color: #f8d7da;
             color: #721c24;
+            display: block;
         }
-        
-        /* Styles pour le tableau médical */
         .medical-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin: 20px 0;
         }
-        
         .medical-table th, .medical-table td {
             border: 1px solid #ddd;
             padding: 12px;
             text-align: left;
         }
-        
         .medical-table th {
             background-color: #3498db;
             color: white;
         }
-        
         .medical-table tr:nth-child(even) {
             background-color: #f2f2f2;
         }
-        
         .medical-table tr:hover {
             background-color: #e9e9e9;
         }
-        
-        .medical-table .value {
-            font-weight: bold;
-            text-align: right;
-        }
-        
-        .normal { color: green; }
-        .low { color: orange; }
-        .high { color: red; }
-        .abnormal { color: red; }
-        .unknown { color: #777; }
-        .error { color: #d9534f; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Analyse de Documents Médicaux</h1>
-        
+
         <form id="uploadForm">
-            <input type="file" id="document" accept="image/*" required>
+            <input type="file" id="document" accept="image/*" required />
             <button type="submit">Analyser</button>
         </form>
-        
+
         <div class="spinner" id="spinner"></div>
-        
         <div id="statusMessage"></div>
-        
+
         <div id="results" style="display: none;">
             <h2>Résultats de l'analyse</h2>
             <p>Temps de traitement: <span id="processingTime">0</span> secondes</p>
-            <table class="medical-table">
-                <thead>
-                    <tr>
-                        <th>Paramètre</th>
-                        <th>Valeur</th>
-                        <th>Unité</th>
-                        <th>Valeurs Usuelles</th>
-                        <th>Interprétation</th>         
-                    </tr>
-                </thead>
-                <tbody id="resultsBody"></tbody>
-            </table>
+            <div id="tablesContainer"></div>
         </div>
     </div>
 
     <script>
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+
             const fileInput = document.getElementById('document');
             const spinner = document.getElementById('spinner');
             const statusMsg = document.getElementById('statusMessage');
             const resultsDiv = document.getElementById('results');
-            
+
             if (!fileInput.files.length) {
                 showStatus('Veuillez sélectionner un fichier', 'error');
                 return;
             }
-            
-            // Réinitialisation
+
             spinner.style.display = 'block';
-            statusMsg.textContent = '';
             statusMsg.style.display = 'none';
             resultsDiv.style.display = 'none';
-            
+
             try {
                 const formData = new FormData();
                 formData.append('file', fileInput.files[0]);
-                
+
                 const response = await fetch('/api/analyze', {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Erreur inconnue du serveur');
                 }
-                
+
                 const data = await response.json();
-             
-
-
-                
-                // Vérification des données
-                if (!data.parameters) {
+                if (!data.tables) {
                     throw new Error('Réponse invalide de l\'API');
                 }
-                
-                // Affichage des résultats
+
                 displayResults(data);
-                showStatus(`Analyse terminée avec succès`, 'success');
-                
+                showStatus('Analyse terminée avec succès', 'success');
             } catch (error) {
                 console.error('Erreur:', error);
                 showStatus(`Erreur: ${error.message || 'Une erreur est survenue'}`, 'error');
@@ -217,69 +169,73 @@
                 spinner.style.display = 'none';
             }
         });
-        
+
         function displayResults(data) {
-    console.log(data);  // Affiche la structure complète pour déboguer
+            console.log('Données reçues:', data);
+            const tablesContainer = document.getElementById('tablesContainer');
+            tablesContainer.innerHTML = '';
 
-    const tbody = document.getElementById('resultsBody');
-    tbody.innerHTML = '';
+            // Affichage du temps de traitement
+            const processingTime = data.processing_time && !isNaN(data.processing_time)
+                ? data.processing_time.toFixed(2)
+                : 'Inconnu';
+            document.getElementById('processingTime').textContent = processingTime;
 
-    // Vérification de data.processing_time
-    const processingTime = data.processing_time && !isNaN(data.processing_time) ? data.processing_time.toFixed(2) : 'Inconnu';
-    document.getElementById('processingTime').textContent = processingTime;  // Affichage du temps de traitement
+            if (!data.tables || Object.keys(data.tables).length === 0) {
+                tablesContainer.innerHTML = "<p>Aucun tableau détecté dans le document.</p>";
+                document.getElementById('results').style.display = 'block';
+                return;
+            }
 
-    // Vérification des résultats médicaux
-    if (!data.parameters || data.parameters.length === 0) {
-        const row = document.createElement('tr');
-        row.innerHTML = '<td colspan="5" class="unknown">Aucun paramètre médical détecté</td>';
-        tbody.appendChild(row);
-        document.getElementById('results').style.display = 'block';
-        return;
-    }
+            // Pour chaque tableau (section) reçu
+            for (const [sectionName, rows] of Object.entries(data.tables)) {
+                const sectionTitle = document.createElement('h3');
+                sectionTitle.textContent = sectionName;
+                tablesContainer.appendChild(sectionTitle);
 
-    // Traitement des paramètres médicaux
-    data.parameters.forEach(item => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-    <td>${item.champ || 'Inconnu'}</td>
-    <td class="value">${item.valeur !== undefined ? item.valeur : 'N/A'}</td>
-    <td>${item.unité || ''}</td>
-    <td>${item.référence || 'N/A'}</td> <!-- ✅ Ajout de la référence -->
-    <td class="${item.état || 'unknown'}">${getStatusLabel(item.état)}</td>
-`;
-        tbody.appendChild(row);
-    });
+                // Trouver le nombre max de colonnes selon les clés numériques des lignes
+                let maxCols = 0;
+                rows.forEach(row => {
+                    const numericKeys = Object.keys(row)
+                        .map(k => parseInt(k))
+                        .filter(k => !isNaN(k));
+                    const maxKey = numericKeys.length ? Math.max(...numericKeys) : -1;
+                    if (maxKey + 1 > maxCols) maxCols = maxKey + 1;
+                });
 
-    document.getElementById('results').style.display = 'block';
-}
+                const table = document.createElement('table');
+                table.className = 'medical-table';
 
-// Fonction pour obtenir le label de statut basé sur l'état
-function getStatusLabel(état) {
-    switch(état) {
-        case 'Normal':
-            return 'Normal';
-        case 'Anormal':
-            return 'Anormal';
-        default:
-            return 'Non spécifié';
-    }
-}
+                // Création de l'entête dynamique
+                const thead = document.createElement('thead');
+                const headRow = document.createElement('tr');
+                for (let i = 0; i < maxCols; i++) {
+                    const th = document.createElement('th');
+                    th.textContent = `Col ${i}`;
+                    headRow.appendChild(th);
+                }
+                thead.appendChild(headRow);
+                table.appendChild(thead);
 
+                // Création du corps du tableau avec affichage des données telles quelles
+                const tbody = document.createElement('tbody');
+                rows.forEach(row => {
+                    const tr = document.createElement('tr');
+                    for (let i = 0; i < maxCols; i++) {
+                        const td = document.createElement('td');
+                        td.textContent = row[i] !== undefined ? row[i] : '';
+                        tr.appendChild(td);
+                    }
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
 
+                tablesContainer.appendChild(table);
+            }
 
-        
-        function getStatusLabel(status) {
-            const labels = {
-                'normal': 'Normal',
-                'low': 'Bas',
-                'high': 'Élevé',
-                'abnormal': 'Anormal',
-                'unknown': 'Inconnu',
-                'error': 'Erreur'
-            };
-            return labels[status] || status;
+            document.getElementById('results').style.display = 'block';
         }
-        
+
         function showStatus(message, type) {
             const statusMsg = document.getElementById('statusMessage');
             statusMsg.textContent = message;
