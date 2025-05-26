@@ -7,3 +7,7 @@ opencv-python
 easyocr
 scikit-learn
 joblib
+re
+pytesseract
+pandas
+flask
