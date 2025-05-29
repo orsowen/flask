@@ -93,29 +93,57 @@ def extract_champ_valeur_and_others(table_dict):
 def add_etat_to_rows(rows):
     for row in rows:
         try:
-            valeur = float(row.get("valeur", "").replace(",", "."))
-            ref = row.get("Valeurs usuelles", "").strip()
+            # Clean valeur: remove spaces and percent signs
+            raw_valeur = str(row.get("valeur", "")).replace(" ", "").replace("%", "").replace(",", ".")
+            valeur = float(raw_valeur)
 
-            # Match pattern like "4.5 - 11.0" or "12-17"
+            # Correct key for usual values (underscore)
+            ref = row.get("Valeurs_usuelles", "").strip()
+
+            # Try matching numeric ranges like "80 - 100" or "150000 - 400000"
             match = re.match(r"(\d+(?:[.,]\d+)?)\s*[-–]\s*(\d+(?:[.,]\d+)?)", ref)
+
             if match:
                 low = float(match.group(1).replace(',', '.'))
                 high = float(match.group(2).replace(',', '.'))
-
-                if low <= valeur <= high:
-                    row["etat"] = "bonne"
+                # print debug
+                if low > high:
+                    low, high = high, low
+                if valeur < high and valeur > low:
+                    row["etat"] = "Normal"
                 else:
-                    row["etat"] = "anormale"
-        except:
+                    row["etat"] = "Anormal"
+
+            else:
+
+                less_than_match = re.match(r"\(<\s*(\d+(?:[.,]\d+)?)\)", ref)
+                if less_than_match:
+                    threshold = float(less_than_match.group(1).replace(',', '.'))
+                    if valeur < threshold:
+                        print(f"Champ: {row.get('champ')}, Valeur: {valeur} is less than threshold: {threshold}")
+                        row["etat"] = "Normal"
+                    else:
+                        row["etat"] = "Anormal"
+                else:
+                    # If pattern not recognized, set as inconnu
+                    row["etat"] = "inconnu"
+        except Exception as e:
+            # For debugging, uncomment:
+            # print(f"Error processing {row.get('champ')}: {e}")
             row["etat"] = "inconnu"
     return rows
+
 def split_valeur_and_unite(rows):
     for row in rows:
         if "valeur_and_unite" in row:
-            match = re.match(r"^(\d+(?:[\.,]\d+)?)(?:\s*)([^\d\s].*)?$", row["valeur_and_unite"])
+            match = re.match(r"^([\d\s]+(?:[\.,]\d+)?)(?:\s*)([^\d\s].*)?$", row["valeur_and_unite"])
             if match:
-                row["valeur"] = match.group(1).replace(',', '.')
-                row["unité"] = match.group(2).strip() if match.group(2) else ""
+                valeur = match.group(1).replace(' ', '').replace(',', '.')
+                unite = match.group(2).strip() if match.group(2) else ""
+                row["valeur"] = valeur
+                row["unité"] = unite
+            else:
+                print("No match found!")
     return rows
 
 class OcrService:
