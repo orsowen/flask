@@ -7,3 +7,6 @@ opencv-python
 easyocr
 scikit-learn
 joblib
+torch
+torchvision
+torchaudio
