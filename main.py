@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from services.ocr_service import OcrService
-from utils import utils  # Assure-toi que utils.py existe et contient les fonctions nécessaires
+from utils import utils  
 from PIL import Image
 import io
 
@@ -8,7 +8,6 @@ app = Flask(__name__)
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze():
-    print("hi")
     # Vérification si un fichier est présent dans la requête
     if 'file' not in request.files:
         return jsonify({'error': 'Aucun fichier reçu'}), 400
@@ -46,9 +45,6 @@ def analyze():
         # Gestion des erreurs
         return jsonify({'error': f'Erreur durant le traitement : {str(e)}'}), 500
 
-@app.route('/')
-def home():
-    return render_template('test.html')  # Assure-toi que le fichier 'test.html' existe dans le dossier templates
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=3000, debug=True)
